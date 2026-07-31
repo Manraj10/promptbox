@@ -4,137 +4,248 @@
 <meta charset="utf-8">
 <title>Promptbox</title>
 <style>
+  /* Dark-locked tool UI. One accent (sage), one radius scale, no gradients. */
   :root{
-    --bg:#0c0c0e; --panel:#131316; --line:#232329; --line-2:#2e2e36;
-    --ink:#eaeaee; --dim:#8b8b95; --faint:#5a5a63; --accent:#eaeaee; --bad:#ff8f8f;
+    --bg:#0a0a0b;
+    --rail:#0e0e10;
+    --sunk:#161619;
+    --line:#212126;
+    --line-hi:#2c2c33;
+    --ink:#f2f2f4;
+    --ink-2:#a1a1aa;
+    --ink-3:#6b6b75;
+    --ink-4:#48484f;
+    --sage:#8fd3a8;
+    --rose:#f0918f;
+    --r-sm:7px;
+    --r-md:10px;
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%;margin:0}
   body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font:14px/1.55 ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+    background:var(--bg); color:var(--ink);
+    font:14px/1.55 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
     display:flex; flex-direction:column; overflow:hidden;
     -webkit-font-smoothing:antialiased;
+    user-select:none;
   }
-  header{
-    display:flex; align-items:center; justify-content:space-between; gap:16px;
-    padding:12px 18px; border-bottom:1px solid var(--line); flex:0 0 auto;
-  }
-  .brand{font-weight:600; letter-spacing:-.01em}
-  .brand em{font-style:normal; color:var(--faint); font-weight:400}
-  .dot{width:7px;height:7px;border-radius:50%;background:#4a4a52;display:inline-block;
-       margin-right:7px;vertical-align:middle}
-  .dot.on{background:#5ddc9a} .dot.busy{background:#e5c07b}
-  .statusline{color:var(--dim); font-size:13px; display:flex; align-items:center}
-  .ghost{background:none;border:1px solid var(--line-2);color:var(--ink);
-         border-radius:7px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer}
-  .ghost:hover{border-color:#3d3d47}
+  input,textarea,select{user-select:text}
 
-  main{flex:1; display:flex; min-height:0}
-  aside{
-    width:352px; flex:0 0 352px; border-right:1px solid var(--line);
-    padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
+  /* ---------------------------------------------------------------- top bar */
+  header{
+    flex:0 0 auto; height:52px; padding:0 16px;
+    display:flex; align-items:center; gap:14px;
+    border-bottom:1px solid var(--line); background:var(--rail);
   }
-  section.stage{flex:1; display:flex; flex-direction:column; min-width:0}
+  .mark{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.015em}
+  .mark svg{display:block}
+  .sub{color:var(--ink-4);font-weight:400;font-size:13px;letter-spacing:0}
+  .spacer{flex:1}
+  .state{
+    display:flex; align-items:center; gap:7px;
+    font-size:12.5px; color:var(--ink-2);
+    padding:5px 10px; border:1px solid var(--line); border-radius:999px;
+  }
+  .led{width:6px;height:6px;border-radius:50%;background:var(--ink-4);flex:0 0 auto}
+  .led.ok{background:var(--sage);box-shadow:0 0 0 3px rgb(143 211 168 / .13)}
+  .led.work{background:#e3c07a;animation:pulse 1.4s ease-in-out infinite}
+  .led.bad{background:var(--rose)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @media (prefers-reduced-motion:reduce){.led.work{animation:none}}
+
+  button{font:inherit;cursor:pointer}
+  .ghost{
+    background:transparent; color:var(--ink-2);
+    border:1px solid var(--line-hi); border-radius:var(--r-sm);
+    padding:6px 11px; font-size:13px;
+    transition:color .15s, border-color .15s, background .15s;
+  }
+  .ghost:hover{color:var(--ink);border-color:#3a3a43;background:#141418}
+  .ghost:active{transform:translateY(1px)}
+  .ghost:focus-visible,textarea:focus,input:focus,select:focus{
+    outline:2px solid #4d6f5c; outline-offset:1px;
+  }
+
+  /* ------------------------------------------------------------------ shell */
+  main{flex:1;display:flex;min-height:0}
+
+  aside{
+    width:330px; flex:0 0 330px; background:var(--rail);
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .rail-scroll{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+  .rail-foot{flex:0 0 auto;padding:14px 16px;border-top:1px solid var(--line)}
+
+  .field{display:flex;flex-direction:column;gap:7px}
+  .lab{
+    font-size:11px; color:var(--ink-3); letter-spacing:.08em; text-transform:uppercase;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .lab kbd{
+    font:inherit; font-size:10.5px; letter-spacing:0; text-transform:none;
+    color:var(--ink-4); border:1px solid var(--line-hi); border-radius:4px;
+    padding:1px 5px;
+  }
+  textarea,input[type=text],input[type=number],select{
+    width:100%; background:var(--sunk); color:var(--ink);
+    border:1px solid var(--line-hi); border-radius:var(--r-sm);
+    padding:9px 11px; font:inherit; outline:none;
+    transition:border-color .15s;
+  }
+  textarea{min-height:118px;resize:vertical;line-height:1.5}
+  textarea::placeholder,input::placeholder{color:var(--ink-4)}
+  textarea:hover,input:hover,select:hover{border-color:#33333b}
+  select{appearance:none;padding-right:28px;
+    background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),
+                     linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
+    background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  .primary{
+    width:100%; background:var(--ink); color:#0a0a0b;
+    border:0; border-radius:var(--r-sm); padding:11px;
+    font-weight:650; letter-spacing:-.005em;
+    transition:opacity .15s, transform .06s;
+  }
+  .primary:hover:not(:disabled){opacity:.9}
+  .primary:active:not(:disabled){transform:translateY(1px)}
+  .primary:disabled{background:#1e1e23;color:var(--ink-4);cursor:default}
+
+  details{border-top:1px solid var(--line);padding-top:14px}
+  summary{
+    list-style:none; cursor:pointer; font-size:11px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--ink-3); display:flex; align-items:center; gap:7px;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"";width:0;height:0;border:4px solid transparent;
+    border-left-color:var(--ink-4);transition:transform .15s}
+  details[open] summary::before{transform:rotate(90deg) translateX(-1px)}
+  summary:hover{color:var(--ink-2)}
+  .adv{display:flex;flex-direction:column;gap:14px;padding-top:14px}
+  .toggle{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2);cursor:pointer}
+  .toggle input{width:auto;margin:0;accent-color:#6f9d80}
+
+  /* ----------------------------------------------------------------- canvas */
+  .stage{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
   .canvas{
-    flex:1; margin:16px; border:1px solid var(--line); border-radius:12px;
-    background:var(--panel); display:flex; align-items:center; justify-content:center;
+    flex:1; margin:16px 16px 0; border:1px solid var(--line);
+    border-radius:var(--r-md); background:
+      repeating-conic-gradient(#0e0e10 0% 25%, #101013 0% 50%) 0 0 / 22px 22px;
+    display:flex; align-items:center; justify-content:center;
     overflow:hidden; position:relative; min-height:0;
   }
-  .canvas img{max-width:100%; max-height:100%; object-fit:contain; display:block}
-  .empty{color:var(--faint); font-size:13px; text-align:center; padding:0 40px}
-  .bar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--accent);
-       transition:width .35s ease}
+  .canvas img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .placeholder{text-align:center;padding:0 48px;color:var(--ink-3);max-width:460px}
+  .placeholder h2{margin:0 0 8px;font-size:15px;font-weight:600;color:var(--ink-2)}
+  .placeholder p{margin:0;font-size:13px;line-height:1.6;color:var(--ink-4)}
+  .progress{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--sage);
+    transition:width .35s ease}
+  .alert{
+    position:absolute; left:16px; right:16px; bottom:16px;
+    background:#1d1416; border:1px solid #4a2b2e; color:#f5c2c1;
+    border-radius:var(--r-sm); padding:10px 12px; font-size:13px; line-height:1.5;
+  }
 
-  label{display:block;font-size:11px;color:var(--dim);margin-bottom:6px;
-        text-transform:uppercase;letter-spacing:.07em}
-  textarea,select,input[type=text],input[type=number]{
-    width:100%; background:var(--panel); color:var(--ink);
-    border:1px solid var(--line-2); border-radius:8px; padding:9px 11px;
-    font:inherit; outline:none;
+  .filmstrip{flex:0 0 auto;display:flex;gap:7px;padding:12px 16px 0;overflow-x:auto}
+  .filmstrip::-webkit-scrollbar{height:6px}
+  .filmstrip::-webkit-scrollbar-thumb{background:#26262c;border-radius:3px}
+  .filmstrip img{
+    height:70px;width:50px;object-fit:cover;border-radius:6px;flex:0 0 auto;
+    border:1px solid var(--line-hi);cursor:pointer;opacity:.75;
+    transition:opacity .15s,border-color .15s;
   }
-  textarea{min-height:104px;resize:vertical}
-  textarea:focus,select:focus,input:focus{border-color:#4a4a56}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .go{
-    width:100%;background:var(--accent);color:#0c0c0e;border:0;border-radius:8px;
-    padding:11px;font:inherit;font-weight:650;cursor:pointer;
+  .filmstrip img:hover{opacity:1;border-color:#454550}
+  .statusbar{
+    flex:0 0 auto; display:flex; justify-content:space-between; align-items:center;
+    padding:10px 18px 12px; font-size:12px; color:var(--ink-4);
+    font-variant-numeric:tabular-nums;
   }
-  .go:disabled{background:#26262c;color:var(--faint);cursor:default}
-  details summary{cursor:pointer;color:var(--dim);font-size:12px;
-                  text-transform:uppercase;letter-spacing:.07em;list-style:none}
-  details summary::-webkit-details-marker{display:none}
-  details summary::before{content:"▸ ";color:var(--faint)}
-  details[open] summary::before{content:"▾ "}
-  details>div{margin-top:12px;display:flex;flex-direction:column;gap:12px}
-  .check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
-  .check input{width:auto}
-  .film{display:flex;gap:7px;padding:0 16px 14px;overflow-x:auto;flex:0 0 auto}
-  .film img{height:74px;width:52px;object-fit:cover;border-radius:6px;
-            border:1px solid var(--line-2);cursor:pointer;flex:0 0 auto}
-  .film img:hover{border-color:#4a4a56}
-  .err{color:var(--bad)}
-  .foot{display:flex;justify-content:space-between;color:var(--faint);font-size:12px;
-        padding:0 18px 12px}
+  ::-webkit-scrollbar{width:9px}
+  ::-webkit-scrollbar-thumb{background:#212127;border-radius:5px}
+  ::-webkit-scrollbar-track{background:transparent}
 </style>
 </head>
 <body>
+
 <header>
-  <div class="brand">Promptbox <em>— local image generation</em></div>
-  <div class="statusline"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
-  <div style="display:flex;gap:8px">
-    <button class="ghost" id="startBtn" hidden>Start backend</button>
-    <button class="ghost" id="folderBtn">Output</button>
+  <div class="mark">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2"
+            stroke="#f2f2f4" stroke-width="1.7"/>
+      <path d="M8.4 8.6 L11.4 12 L8.4 15.4" stroke="#8fd3a8" stroke-width="1.7"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M13.4 15.4 H16.2" stroke="#f2f2f4" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>
+    Promptbox <span class="sub">local</span>
   </div>
+  <div class="spacer"></div>
+  <div class="state"><span class="led" id="led"></span><span id="stateText">Connecting</span></div>
+  <button class="ghost" id="startBtn" hidden>Start backend</button>
+  <button class="ghost" id="folderBtn">Output folder</button>
 </header>
 
 <main>
   <aside>
-    <div>
-      <label for="prompt">Prompt</label>
-      <textarea id="prompt" placeholder="a golden retriever puppy asleep on a windowsill"></textarea>
-    </div>
+    <div class="rail-scroll">
+      <div class="field">
+        <div class="lab"><span>Prompt</span><kbd>Ctrl + Enter</kbd></div>
+        <textarea id="prompt" spellcheck="false"
+          placeholder="a golden retriever puppy asleep on a windowsill"></textarea>
+      </div>
 
-    <div class="grid2">
-      <div><label for="size">Size</label><select id="size"></select></div>
-      <div><label for="seed">Seed</label><input type="text" id="seed" placeholder="random"></div>
-    </div>
+      <div class="duo">
+        <div class="field"><div class="lab">Size</div><select id="size"></select></div>
+        <div class="field"><div class="lab">Seed</div>
+          <input type="text" id="seed" placeholder="random" spellcheck="false"></div>
+      </div>
 
-    <div><label for="model">Model</label><select id="model"></select></div>
+      <div class="field"><div class="lab">Model</div><select id="model"></select></div>
 
-    <button class="go" id="go">Generate</button>
-
-    <details>
-      <summary>Advanced</summary>
-      <div>
-        <div class="grid2">
-          <div><label for="steps">Steps</label><input type="number" id="steps" min="1" max="150" value="30"></div>
-          <div><label for="cfg">CFG</label><input type="number" id="cfg" min="1" max="20" step="0.5" value="4.5"></div>
-        </div>
-        <div><label for="sampler">Sampler</label><select id="sampler"></select></div>
-        <label class="check"><input type="checkbox" id="quality" checked> Auto-append realism terms</label>
-        <div>
-          <label for="negative">Negative prompt</label>
-          <textarea id="negative" style="min-height:78px"></textarea>
-        </div>
-        <div>
-          <label for="comfydir">ComfyUI folder</label>
-          <div style="display:flex;gap:8px">
-            <input type="text" id="comfydir" placeholder="C:\ComfyUI">
-            <button class="ghost" id="browse">Browse</button>
+      <details id="adv">
+        <summary>Advanced</summary>
+        <div class="adv">
+          <div class="duo">
+            <div class="field"><div class="lab">Steps</div>
+              <input type="number" id="steps" min="1" max="150" value="30"></div>
+            <div class="field"><div class="lab">CFG</div>
+              <input type="number" id="cfg" min="1" max="20" step="0.5" value="4.5"></div>
+          </div>
+          <div class="field"><div class="lab">Sampler</div><select id="sampler"></select></div>
+          <label class="toggle">
+            <input type="checkbox" id="quality" checked>
+            Append realism terms
+          </label>
+          <div class="field"><div class="lab">Negative prompt</div>
+            <textarea id="negative" style="min-height:80px" spellcheck="false"></textarea></div>
+          <div class="field"><div class="lab">ComfyUI folder</div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="comfydir" spellcheck="false" placeholder="C:\ComfyUI">
+              <button class="ghost" id="browse">Browse</button>
+            </div>
           </div>
         </div>
-      </div>
-    </details>
+      </details>
+    </div>
+
+    <div class="rail-foot">
+      <button class="primary" id="go" disabled>Generate</button>
+    </div>
   </aside>
 
   <section class="stage">
     <div class="canvas" id="canvas">
-      <div class="empty" id="empty">Describe an image and press Generate.</div>
-      <div class="bar" id="bar"></div>
+      <div class="placeholder">
+        <h2>Nothing generated yet</h2>
+        <p>Describe an image in plain words. Skip quality boosters like
+           "8k" or "masterpiece"; they push the model toward plastic-looking
+           output. The realism terms are added for you.</p>
+      </div>
+      <div class="progress" id="progress"></div>
     </div>
-    <div class="film" id="film"></div>
-    <div class="foot"><span id="meta"></span><span id="timer"></span></div>
+    <div class="filmstrip" id="filmstrip"></div>
+    <div class="statusbar"><span id="meta"></span><span id="clock"></span></div>
   </section>
 </main>
 
@@ -144,56 +255,74 @@ const api = () => window.pywebview.api;
 const shots = [];
 let busy = false, ready = false;
 
-function setStatus(text, cls) {
-  $('status').textContent = text;
-  $('dot').className = 'dot' + (cls ? ' ' + cls : '');
-}
+const setState = (text, kind) => {
+  $('stateText').textContent = text;
+  $('led').className = 'led' + (kind ? ' ' + kind : '');
+};
 
-function fillSelect(el, values, chosen) {
+const fill = (el, values, chosen) => {
   el.innerHTML = values.map(v =>
     `<option value="${v}"${v === chosen ? ' selected' : ''}>${v}</option>`).join('');
+};
+
+function clearAlert() {
+  const a = $('canvas').querySelector('.alert');
+  if (a) a.remove();
+}
+
+function alertBox(message) {
+  clearAlert();
+  const el = document.createElement('div');
+  el.className = 'alert';
+  el.textContent = message;
+  $('canvas').appendChild(el);
 }
 
 async function refresh() {
   const s = await api().status();
   ready = s.up;
   $('startBtn').hidden = s.up;
-  setStatus(s.up ? 'Backend ready' : 'Backend not running', s.up ? 'on' : '');
-  fillSelect($('size'), s.sizes, s.settings.size);
-  if (s.models.length) fillSelect($('model'), s.models, s.settings.model);
-  else $('model').innerHTML = '<option>— none found —</option>';
-  if (s.samplers.length) fillSelect($('sampler'), s.samplers, s.settings.sampler);
+  setState(s.up ? 'Ready' : 'Backend offline', s.up ? 'ok' : '');
+  fill($('size'), s.sizes, s.settings.size);
+  if (s.models.length) fill($('model'), s.models, s.settings.model);
+  else $('model').innerHTML = '<option>No checkpoint found</option>';
+  if (s.samplers.length) fill($('sampler'), s.samplers, s.settings.sampler);
   $('steps').value = s.settings.steps;
   $('cfg').value = s.settings.cfg;
   $('quality').checked = s.settings.add_quality;
   $('negative').value = s.settings.negative;
   $('comfydir').value = s.comfy_dir || '';
   $('go').disabled = !s.up;
+  if (!s.up && !s.comfy_dir) $('adv').open = true;
 }
 
 async function startBackend() {
-  setStatus('Starting ComfyUI…', 'busy');
+  clearAlert();
+  setState('Starting ComfyUI', 'work');
   $('startBtn').disabled = true;
   const r = await api().start_backend($('comfydir').value.trim());
   $('startBtn').disabled = false;
-  if (r.error) { setStatus(r.error, ''); $('status').classList.add('err'); return; }
-  $('status').classList.remove('err');
+  if (r.error) { setState('Backend offline', 'bad'); alertBox(r.error); return; }
   await refresh();
 }
 
 async function generate() {
   if (busy || !ready) return;
   const prompt = $('prompt').value.trim();
-  if (!prompt) return $('prompt').focus();
+  if (!prompt) { $('prompt').focus(); return; }
 
   busy = true;
+  clearAlert();
   $('go').disabled = true;
-  setStatus('Generating…', 'busy');
+  $('go').textContent = 'Generating';
+  setState('Generating', 'work');
+
   const t0 = Date.now();
-  $('bar').style.width = '12%';
+  $('progress').style.width = '10%';
   const tick = setInterval(() => {
-    $('timer').textContent = ((Date.now() - t0) / 1000).toFixed(0) + 's';
-    $('bar').style.width = Math.min(93, 12 + (Date.now() - t0) / 400) + '%';
+    const s = (Date.now() - t0) / 1000;
+    $('clock').textContent = s.toFixed(0) + 's';
+    $('progress').style.width = Math.min(94, 10 + s * 2.4) + '%';
   }, 200);
 
   const res = await api().generate({
@@ -205,30 +334,31 @@ async function generate() {
 
   clearInterval(tick);
   if (res.error) {
-    setStatus(res.error, '');
-    $('status').classList.add('err');
+    setState('Ready', 'ok');
+    alertBox(res.error);
   } else {
-    $('status').classList.remove('err');
-    setStatus('Backend ready', 'on');
-    show(res.image);
-    $('meta').textContent = `seed ${res.seed} · ${res.width}×${res.height}`;
+    setState('Ready', 'ok');
+    render(res.image);
+    $('meta').textContent = `seed ${res.seed} · ${res.width} x ${res.height}`;
     shots.unshift(res.image);
-    $('film').innerHTML = shots.slice(0, 24)
-      .map((src, i) => `<img src="${src}" data-i="${i}">`).join('');
+    $('filmstrip').innerHTML = shots.slice(0, 30)
+      .map((src, i) => `<img src="${src}" data-i="${i}" alt="">`).join('');
   }
-  $('bar').style.width = '100%';
-  setTimeout(() => ($('bar').style.width = '0'), 500);
+  $('progress').style.width = '100%';
+  setTimeout(() => ($('progress').style.width = '0'), 480);
   busy = false;
   $('go').disabled = false;
+  $('go').textContent = 'Generate';
 }
 
-function show(src) {
+function render(src) {
   $('canvas').innerHTML =
-    `<img src="${src}"><div class="bar" id="bar" style="width:0"></div>`;
+    `<img src="${src}" alt="Generated image">` +
+    `<div class="progress" id="progress" style="width:0"></div>`;
 }
 
-$('film').addEventListener('click', e => {
-  if (e.target.tagName === 'IMG') show(shots[+e.target.dataset.i]);
+$('filmstrip').addEventListener('click', e => {
+  if (e.target.tagName === 'IMG') render(shots[+e.target.dataset.i]);
 });
 $('go').onclick = generate;
 $('startBtn').onclick = startBackend;

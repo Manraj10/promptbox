@@ -1,4 +1,4 @@
-"""Promptbox — a plain desktop window over a local ComfyUI install."""
+"""Promptbox - a plain desktop window over a local ComfyUI install."""
 from __future__ import annotations
 
 import json
@@ -162,8 +162,8 @@ def main():
     api = Api()
     window = webview.create_window(
         APP_NAME, str(UI), js_api=api,
-        width=1180, height=820, min_size=(900, 640),
-        background_color="#0c0c0e",
+        width=1180, height=820, min_size=(920, 640),
+        background_color="#0a0a0b",
     )
 
     def cleanup():

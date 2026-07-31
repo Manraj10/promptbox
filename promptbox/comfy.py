@@ -1,6 +1,6 @@
 """Thin client for a local ComfyUI instance.
 
-Promptbox does not reimplement diffusion — it drives ComfyUI's HTTP API and hides
+Promptbox does not reimplement diffusion - it drives ComfyUI's HTTP API and hides
 the node graph behind a single prompt box.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ from pathlib import Path
 DEFAULT_HOST = "127.0.0.1:8188"
 
 # Appended to every prompt. Photo-realism is won by *removing* the glossy tells, not
-# by adding "8k masterpiece" — those push SDXL toward plastic CGI faces.
+# by adding "8k masterpiece" - those push SDXL toward plastic CGI faces.
 QUALITY_SUFFIX = "natural light, shallow depth of field, visible skin texture"
 DEFAULT_NEGATIVE = (
     "airbrushed, plastic skin, poreless, cgi, 3d render, illustration, painting, "
