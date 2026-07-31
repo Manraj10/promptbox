@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Promptbox</title>
+<style>
+  :root{
+    --bg:#0c0c0e; --panel:#131316; --line:#232329; --line-2:#2e2e36;
+    --ink:#eaeaee; --dim:#8b8b95; --faint:#5a5a63; --accent:#eaeaee; --bad:#ff8f8f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:14px/1.55 ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:12px 18px; border-bottom:1px solid var(--line); flex:0 0 auto;
+  }
+  .brand{font-weight:600; letter-spacing:-.01em}
+  .brand em{font-style:normal; color:var(--faint); font-weight:400}
+  .dot{width:7px;height:7px;border-radius:50%;background:#4a4a52;display:inline-block;
+       margin-right:7px;vertical-align:middle}
+  .dot.on{background:#5ddc9a} .dot.busy{background:#e5c07b}
+  .statusline{color:var(--dim); font-size:13px; display:flex; align-items:center}
+  .ghost{background:none;border:1px solid var(--line-2);color:var(--ink);
+         border-radius:7px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer}
+  .ghost:hover{border-color:#3d3d47}
+
+  main{flex:1; display:flex; min-height:0}
+  aside{
+    width:352px; flex:0 0 352px; border-right:1px solid var(--line);
+    padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:14px;
+  }
+  section.stage{flex:1; display:flex; flex-direction:column; min-width:0}
+  .canvas{
+    flex:1; margin:16px; border:1px solid var(--line); border-radius:12px;
+    background:var(--panel); display:flex; align-items:center; justify-content:center;
+    overflow:hidden; position:relative; min-height:0;
+  }
+  .canvas img{max-width:100%; max-height:100%; object-fit:contain; display:block}
+  .empty{color:var(--faint); font-size:13px; text-align:center; padding:0 40px}
+  .bar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--accent);
+       transition:width .35s ease}
+
+  label{display:block;font-size:11px;color:var(--dim);margin-bottom:6px;
+        text-transform:uppercase;letter-spacing:.07em}
+  textarea,select,input[type=text],input[type=number]{
+    width:100%; background:var(--panel); color:var(--ink);
+    border:1px solid var(--line-2); border-radius:8px; padding:9px 11px;
+    font:inherit; outline:none;
+  }
+  textarea{min-height:104px;resize:vertical}
+  textarea:focus,select:focus,input:focus{border-color:#4a4a56}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .go{
+    width:100%;background:var(--accent);color:#0c0c0e;border:0;border-radius:8px;
+    padding:11px;font:inherit;font-weight:650;cursor:pointer;
+  }
+  .go:disabled{background:#26262c;color:var(--faint);cursor:default}
+  details summary{cursor:pointer;color:var(--dim);font-size:12px;
+                  text-transform:uppercase;letter-spacing:.07em;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▸ ";color:var(--faint)}
+  details[open] summary::before{content:"▾ "}
+  details>div{margin-top:12px;display:flex;flex-direction:column;gap:12px}
+  .check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+  .check input{width:auto}
+  .film{display:flex;gap:7px;padding:0 16px 14px;overflow-x:auto;flex:0 0 auto}
+  .film img{height:74px;width:52px;object-fit:cover;border-radius:6px;
+            border:1px solid var(--line-2);cursor:pointer;flex:0 0 auto}
+  .film img:hover{border-color:#4a4a56}
+  .err{color:var(--bad)}
+  .foot{display:flex;justify-content:space-between;color:var(--faint);font-size:12px;
+        padding:0 18px 12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Promptbox <em>— local image generation</em></div>
+  <div class="statusline"><span class="dot" id="dot"></span><span id="status">Connecting…</span></div>
+  <div style="display:flex;gap:8px">
+    <button class="ghost" id="startBtn" hidden>Start backend</button>
+    <button class="ghost" id="folderBtn">Output</button>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div>
+      <label for="prompt">Prompt</label>
+      <textarea id="prompt" placeholder="a golden retriever puppy asleep on a windowsill"></textarea>
+    </div>
+
+    <div class="grid2">
+      <div><label for="size">Size</label><select id="size"></select></div>
+      <div><label for="seed">Seed</label><input type="text" id="seed" placeholder="random"></div>
+    </div>
+
+    <div><label for="model">Model</label><select id="model"></select></div>
+
+    <button class="go" id="go">Generate</button>
+
+    <details>
+      <summary>Advanced</summary>
+      <div>
+        <div class="grid2">
+          <div><label for="steps">Steps</label><input type="number" id="steps" min="1" max="150" value="30"></div>
+          <div><label for="cfg">CFG</label><input type="number" id="cfg" min="1" max="20" step="0.5" value="4.5"></div>
+        </div>
+        <div><label for="sampler">Sampler</label><select id="sampler"></select></div>
+        <label class="check"><input type="checkbox" id="quality" checked> Auto-append realism terms</label>
+        <div>
+          <label for="negative">Negative prompt</label>
+          <textarea id="negative" style="min-height:78px"></textarea>
+        </div>
+        <div>
+          <label for="comfydir">ComfyUI folder</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="comfydir" placeholder="C:\ComfyUI">
+            <button class="ghost" id="browse">Browse</button>
+          </div>
+        </div>
+      </div>
+    </details>
+  </aside>
+
+  <section class="stage">
+    <div class="canvas" id="canvas">
+      <div class="empty" id="empty">Describe an image and press Generate.</div>
+      <div class="bar" id="bar"></div>
+    </div>
+    <div class="film" id="film"></div>
+    <div class="foot"><span id="meta"></span><span id="timer"></span></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const api = () => window.pywebview.api;
+const shots = [];
+let busy = false, ready = false;
+
+function setStatus(text, cls) {
+  $('status').textContent = text;
+  $('dot').className = 'dot' + (cls ? ' ' + cls : '');
+}
+
+function fillSelect(el, values, chosen) {
+  el.innerHTML = values.map(v =>
+    `<option value="${v}"${v === chosen ? ' selected' : ''}>${v}</option>`).join('');
+}
+
+async function refresh() {
+  const s = await api().status();
+  ready = s.up;
+  $('startBtn').hidden = s.up;
+  setStatus(s.up ? 'Backend ready' : 'Backend not running', s.up ? 'on' : '');
+  fillSelect($('size'), s.sizes, s.settings.size);
+  if (s.models.length) fillSelect($('model'), s.models, s.settings.model);
+  else $('model').innerHTML = '<option>— none found —</option>';
+  if (s.samplers.length) fillSelect($('sampler'), s.samplers, s.settings.sampler);
+  $('steps').value = s.settings.steps;
+  $('cfg').value = s.settings.cfg;
+  $('quality').checked = s.settings.add_quality;
+  $('negative').value = s.settings.negative;
+  $('comfydir').value = s.comfy_dir || '';
+  $('go').disabled = !s.up;
+}
+
+async function startBackend() {
+  setStatus('Starting ComfyUI…', 'busy');
+  $('startBtn').disabled = true;
+  const r = await api().start_backend($('comfydir').value.trim());
+  $('startBtn').disabled = false;
+  if (r.error) { setStatus(r.error, ''); $('status').classList.add('err'); return; }
+  $('status').classList.remove('err');
+  await refresh();
+}
+
+async function generate() {
+  if (busy || !ready) return;
+  const prompt = $('prompt').value.trim();
+  if (!prompt) return $('prompt').focus();
+
+  busy = true;
+  $('go').disabled = true;
+  setStatus('Generating…', 'busy');
+  const t0 = Date.now();
+  $('bar').style.width = '12%';
+  const tick = setInterval(() => {
+    $('timer').textContent = ((Date.now() - t0) / 1000).toFixed(0) + 's';
+    $('bar').style.width = Math.min(93, 12 + (Date.now() - t0) / 400) + '%';
+  }, 200);
+
+  const res = await api().generate({
+    prompt, size: $('size').value, seed: $('seed').value.trim(),
+    model: $('model').value, steps: $('steps').value, cfg: $('cfg').value,
+    sampler: $('sampler').value, negative: $('negative').value,
+    add_quality: $('quality').checked,
+  });
+
+  clearInterval(tick);
+  if (res.error) {
+    setStatus(res.error, '');
+    $('status').classList.add('err');
+  } else {
+    $('status').classList.remove('err');
+    setStatus('Backend ready', 'on');
+    show(res.image);
+    $('meta').textContent = `seed ${res.seed} · ${res.width}×${res.height}`;
+    shots.unshift(res.image);
+    $('film').innerHTML = shots.slice(0, 24)
+      .map((src, i) => `<img src="${src}" data-i="${i}">`).join('');
+  }
+  $('bar').style.width = '100%';
+  setTimeout(() => ($('bar').style.width = '0'), 500);
+  busy = false;
+  $('go').disabled = false;
+}
+
+function show(src) {
+  $('canvas').innerHTML =
+    `<img src="${src}"><div class="bar" id="bar" style="width:0"></div>`;
+}
+
+$('film').addEventListener('click', e => {
+  if (e.target.tagName === 'IMG') show(shots[+e.target.dataset.i]);
+});
+$('go').onclick = generate;
+$('startBtn').onclick = startBackend;
+$('folderBtn').onclick = () => api().open_output();
+$('browse').onclick = async () => {
+  const r = await api().pick_folder();
+  if (r.path) { $('comfydir').value = r.path; api().save_setting('comfy_dir', r.path); }
+};
+$('comfydir').addEventListener('change', e =>
+  api().save_setting('comfy_dir', e.target.value.trim()));
+$('prompt').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+});
+window.addEventListener('pywebviewready', refresh);
+</script>
+</body>
+</html>
