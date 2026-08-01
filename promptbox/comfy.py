@@ -117,7 +117,64 @@ class ComfyClient:
         opts = info["KSampler"]["input"]["required"]["sampler_name"][0]
         return list(opts) if isinstance(opts, list) else []
 
+    # ------------------------------------------------------------------ upload
+
+    def upload_image(self, data_url: str, name: str) -> str:
+        """Push a data: URL into ComfyUI's input folder. Returns the stored name."""
+        raw = base64.b64decode(data_url.split(",", 1)[-1])
+        boundary = "----promptbox" + str(random.randint(10**9, 10**10))
+        body = b"".join([
+            f"--{boundary}\r\n".encode(),
+            f'Content-Disposition: form-data; name="image"; filename="{name}"\r\n'.encode(),
+            b"Content-Type: image/png\r\n\r\n", raw, b"\r\n",
+            f"--{boundary}\r\n".encode(),
+            b'Content-Disposition: form-data; name="overwrite"\r\n\r\ntrue\r\n',
+            f"--{boundary}--\r\n".encode(),
+        ])
+        req = urllib.request.Request(
+            f"{self.base}/upload/image", data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"})
+        try:
+            res = json.loads(urllib.request.urlopen(req, timeout=60).read())
+        except urllib.error.HTTPError as e:
+            raise ComfyError(f"Upload failed: {e.read()[:200].decode()}")
+        sub = res.get("subfolder") or ""
+        return f"{sub}/{res['name']}" if sub else res["name"]
+
     # ---------------------------------------------------------------- workflow
+
+    @staticmethod
+    def _edit_graph(model, prompt, negative, image_name, seed, steps, cfg,
+                    sampler, denoise):
+        """img2img: encode the source image and partially re-noise it.
+
+        denoise is the whole story. Low values nudge, high values reinvent:
+          0.25-0.40  recolour, lighting, small texture changes
+          0.45-0.60  clothing, background, style; subject survives
+          0.70+      effectively a new image loosely guided by the old one
+        """
+        return {
+            "1": {"class_type": "CheckpointLoaderSimple",
+                  "inputs": {"ckpt_name": model}},
+            "2": {"class_type": "CLIPTextEncode",
+                  "inputs": {"text": prompt, "clip": ["1", 1]}},
+            "3": {"class_type": "CLIPTextEncode",
+                  "inputs": {"text": negative, "clip": ["1", 1]}},
+            "4": {"class_type": "LoadImage",
+                  "inputs": {"image": image_name, "upload": "image"}},
+            "5": {"class_type": "VAEEncode",
+                  "inputs": {"pixels": ["4", 0], "vae": ["1", 2]}},
+            "6": {"class_type": "KSampler",
+                  "inputs": {"seed": seed, "steps": steps, "cfg": cfg,
+                             "sampler_name": sampler, "scheduler": "karras",
+                             "denoise": denoise, "model": ["1", 0],
+                             "positive": ["2", 0], "negative": ["3", 0],
+                             "latent_image": ["5", 0]}},
+            "7": {"class_type": "VAEDecode",
+                  "inputs": {"samples": ["6", 0], "vae": ["1", 2]}},
+            "8": {"class_type": "SaveImage",
+                  "inputs": {"filename_prefix": "promptbox/edit", "images": ["7", 0]}},
+        }
 
     @staticmethod
     def _graph(model, prompt, negative, w, h, seed, steps, cfg, sampler):
@@ -143,14 +200,21 @@ class ComfyClient:
 
     def generate(self, *, model, prompt, negative=None, size="Portrait 832x1216",
                  seed=None, steps=30, cfg=4.5, sampler="dpmpp_2m",
-                 add_quality=True, on_progress=None):
+                 add_quality=True, source_image=None, denoise=0.55,
+                 on_progress=None):
         if not prompt.strip():
             raise ComfyError("Prompt is empty")
         w, h = SIZES.get(size, SIZES["Portrait 832x1216"])
         seed = int(seed) if str(seed).strip().isdigit() else random.randint(1, 2**31 - 1)
         text = f"{prompt.strip()}, {QUALITY_SUFFIX}" if add_quality else prompt.strip()
-        graph = self._graph(model, text, negative or DEFAULT_NEGATIVE,
-                            w, h, seed, steps, cfg, sampler)
+
+        if source_image:
+            name = self.upload_image(source_image, f"pb_src_{seed}.png")
+            graph = self._edit_graph(model, text, negative or DEFAULT_NEGATIVE,
+                                     name, seed, steps, cfg, sampler, float(denoise))
+        else:
+            graph = self._graph(model, text, negative or DEFAULT_NEGATIVE,
+                                w, h, seed, steps, cfg, sampler)
 
         payload = json.dumps({"prompt": graph}).encode()
         req = urllib.request.Request(f"{self.base}/prompt", data=payload,

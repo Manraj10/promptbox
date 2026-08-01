@@ -6,19 +6,11 @@
 <style>
   /* Dark-locked tool UI. One accent (sage), one radius scale, no gradients. */
   :root{
-    --bg:#0a0a0b;
-    --rail:#0e0e10;
-    --sunk:#161619;
-    --line:#212126;
-    --line-hi:#2c2c33;
-    --ink:#f2f2f4;
-    --ink-2:#a1a1aa;
-    --ink-3:#6b6b75;
-    --ink-4:#48484f;
-    --sage:#8fd3a8;
-    --rose:#f0918f;
-    --r-sm:7px;
-    --r-md:10px;
+    --bg:#0a0a0b; --rail:#0e0e10; --sunk:#161619; --bubble:#17171b;
+    --line:#212126; --line-hi:#2c2c33;
+    --ink:#f2f2f4; --ink-2:#a1a1aa; --ink-3:#6b6b75; --ink-4:#48484f;
+    --sage:#8fd3a8; --rose:#f0918f;
+    --r-sm:7px; --r-md:10px; --r-lg:14px;
   }
   *{box-sizing:border-box}
   html,body{height:100%;margin:0}
@@ -26,143 +18,120 @@
     background:var(--bg); color:var(--ink);
     font:14px/1.55 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
     display:flex; flex-direction:column; overflow:hidden;
-    -webkit-font-smoothing:antialiased;
-    user-select:none;
+    -webkit-font-smoothing:antialiased; user-select:none;
   }
   input,textarea,select{user-select:text}
+  button{font:inherit;cursor:pointer}
 
   /* ---------------------------------------------------------------- top bar */
   header{
-    flex:0 0 auto; height:52px; padding:0 16px;
-    display:flex; align-items:center; gap:14px;
-    border-bottom:1px solid var(--line); background:var(--rail);
+    flex:0 0 auto; height:52px; padding:0 16px; display:flex; align-items:center;
+    gap:12px; border-bottom:1px solid var(--line); background:var(--rail);
   }
   .mark{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.015em}
-  .mark svg{display:block}
-  .sub{color:var(--ink-4);font-weight:400;font-size:13px;letter-spacing:0}
+  .mark .sub{color:var(--ink-4);font-weight:400;font-size:13px}
   .spacer{flex:1}
-  .state{
-    display:flex; align-items:center; gap:7px;
-    font-size:12.5px; color:var(--ink-2);
-    padding:5px 10px; border:1px solid var(--line); border-radius:999px;
-  }
-  .led{width:6px;height:6px;border-radius:50%;background:var(--ink-4);flex:0 0 auto}
+  .state{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);
+         padding:5px 10px;border:1px solid var(--line);border-radius:999px}
+  .led{width:6px;height:6px;border-radius:50%;background:var(--ink-4)}
   .led.ok{background:var(--sage);box-shadow:0 0 0 3px rgb(143 211 168 / .13)}
   .led.work{background:#e3c07a;animation:pulse 1.4s ease-in-out infinite}
   .led.bad{background:var(--rose)}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   @media (prefers-reduced-motion:reduce){.led.work{animation:none}}
-
-  button{font:inherit;cursor:pointer}
-  .ghost{
-    background:transparent; color:var(--ink-2);
-    border:1px solid var(--line-hi); border-radius:var(--r-sm);
-    padding:6px 11px; font-size:13px;
-    transition:color .15s, border-color .15s, background .15s;
-  }
+  .ghost{background:transparent;color:var(--ink-2);border:1px solid var(--line-hi);
+         border-radius:var(--r-sm);padding:6px 11px;font-size:13px;
+         transition:color .15s,border-color .15s,background .15s}
   .ghost:hover{color:var(--ink);border-color:#3a3a43;background:#141418}
   .ghost:active{transform:translateY(1px)}
+  .ghost[aria-pressed=true]{color:var(--ink);border-color:#3a3a43;background:#16161a}
   .ghost:focus-visible,textarea:focus,input:focus,select:focus{
-    outline:2px solid #4d6f5c; outline-offset:1px;
-  }
+    outline:2px solid #4d6f5c;outline-offset:1px}
 
   /* ------------------------------------------------------------------ shell */
   main{flex:1;display:flex;min-height:0}
+  .chatcol{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
 
-  aside{
-    width:330px; flex:0 0 330px; background:var(--rail);
-    border-right:1px solid var(--line);
-    display:flex; flex-direction:column; min-height:0;
-  }
-  .rail-scroll{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
-  .rail-foot{flex:0 0 auto;padding:14px 16px;border-top:1px solid var(--line)}
+  .thread{flex:1;overflow-y:auto;padding:24px 0 8px}
+  .inner{max-width:760px;margin:0 auto;padding:0 24px;
+         display:flex;flex-direction:column;gap:20px}
 
-  .field{display:flex;flex-direction:column;gap:7px}
-  .lab{
-    font-size:11px; color:var(--ink-3); letter-spacing:.08em; text-transform:uppercase;
-    display:flex; justify-content:space-between; align-items:baseline;
-  }
-  .lab kbd{
-    font:inherit; font-size:10.5px; letter-spacing:0; text-transform:none;
-    color:var(--ink-4); border:1px solid var(--line-hi); border-radius:4px;
-    padding:1px 5px;
-  }
-  textarea,input[type=text],input[type=number],select{
-    width:100%; background:var(--sunk); color:var(--ink);
-    border:1px solid var(--line-hi); border-radius:var(--r-sm);
-    padding:9px 11px; font:inherit; outline:none;
-    transition:border-color .15s;
-  }
-  textarea{min-height:118px;resize:vertical;line-height:1.5}
-  textarea::placeholder,input::placeholder{color:var(--ink-4)}
-  textarea:hover,input:hover,select:hover{border-color:#33333b}
-  select{appearance:none;padding-right:28px;
-    background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),
-                     linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
-    background-position:calc(100% - 15px) 52%,calc(100% - 10px) 52%;
-    background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .welcome{margin:auto;text-align:center;color:var(--ink-3);max-width:440px;padding:48px 24px}
+  .welcome h2{margin:0 0 8px;font-size:15px;font-weight:600;color:var(--ink-2)}
+  .welcome p{margin:0 0 16px;font-size:13px;line-height:1.65;color:var(--ink-4)}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+  .chip{background:var(--sunk);border:1px solid var(--line-hi);color:var(--ink-2);
+        border-radius:999px;padding:6px 12px;font-size:12.5px}
+  .chip:hover{border-color:#3f3f49;color:var(--ink)}
+
+  .turn{display:flex;flex-direction:column;gap:8px}
+  .turn.user{align-items:flex-end}
+  .bubble{background:var(--bubble);border:1px solid var(--line-hi);
+          border-radius:var(--r-lg);padding:10px 14px;max-width:82%;
+          white-space:pre-wrap;word-break:break-word}
+  .turn.user .bubble{border-bottom-right-radius:5px}
+  .attached{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+  .attached img{height:52px;width:52px;object-fit:cover;border-radius:8px;
+                border:1px solid var(--line-hi)}
+  .attached span{font-size:12px;color:var(--ink-4)}
+
+  .result{border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;
+          background:repeating-conic-gradient(#0e0e10 0% 25%, #101013 0% 50%) 0 0/22px 22px;
+          max-width:82%}
+  .result img{display:block;max-width:100%;max-height:60vh;object-fit:contain}
+  .caption{display:flex;gap:12px;align-items:center;padding:7px 11px;
+           font-size:11.5px;color:var(--ink-4);border-top:1px solid var(--line);
+           font-variant-numeric:tabular-nums}
+  .caption button{background:none;border:0;color:var(--ink-3);font-size:11.5px;padding:0}
+  .caption button:hover{color:var(--ink-2);text-decoration:underline}
+
+  .thinking{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:13px}
+  .dots{display:inline-flex;gap:3px}
+  .dots i{width:4px;height:4px;border-radius:50%;background:var(--ink-3);
+          animation:bob 1.1s ease-in-out infinite}
+  .dots i:nth-child(2){animation-delay:.15s}
+  .dots i:nth-child(3){animation-delay:.3s}
+  @keyframes bob{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+  @media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.6}}
+  .fail{border:1px solid #4a2b2e;background:#1d1416;color:#f5c2c1;
+        border-radius:var(--r-md);padding:10px 13px;font-size:13px;max-width:82%}
+
+  /* -------------------------------------------------------------- composer */
+  .composer{flex:0 0 auto;border-top:1px solid var(--line);background:var(--rail);
+            padding:12px 0 14px}
+  .cwrap{max-width:760px;margin:0 auto;padding:0 24px;display:flex;
+         flex-direction:column;gap:9px}
+  .context{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-3)}
+  .context img{height:30px;width:30px;object-fit:cover;border-radius:6px;
+               border:1px solid var(--line-hi)}
+  .context .x{margin-left:auto;background:none;border:0;color:var(--ink-4);font-size:12px}
+  .context .x:hover{color:var(--ink-2)}
+  .strength{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-4)}
+  .strength input[type=range]{width:120px;accent-color:#6f9d80}
+  .box{display:flex;gap:9px;align-items:flex-end;background:var(--sunk);
+       border:1px solid var(--line-hi);border-radius:var(--r-md);padding:8px 8px 8px 12px}
+  .box:focus-within{border-color:#4a4a56}
+  .box textarea{flex:1;background:none;border:0;color:var(--ink);resize:none;
+                outline:none;font:inherit;max-height:150px;min-height:24px;padding:4px 0}
+  .box textarea::placeholder{color:var(--ink-4)}
+  .send{background:var(--ink);color:#0a0a0b;border:0;border-radius:var(--r-sm);
+        padding:8px 15px;font-weight:650}
+  .send:disabled{background:#26262c;color:var(--ink-4);cursor:default}
+  .hint{font-size:11px;color:var(--ink-4);text-align:center}
+
+  /* ---------------------------------------------------------------- settings */
+  aside{width:300px;flex:0 0 300px;background:var(--rail);border-left:1px solid var(--line);
+        padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+  aside[hidden]{display:none}
+  .lab{font-size:11px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;
+       margin-bottom:6px}
+  .field textarea,.field input,.field select{
+    width:100%;background:var(--sunk);color:var(--ink);border:1px solid var(--line-hi);
+    border-radius:var(--r-sm);padding:8px 10px;font:inherit;outline:none}
   .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-  .primary{
-    width:100%; background:var(--ink); color:#0a0a0b;
-    border:0; border-radius:var(--r-sm); padding:11px;
-    font-weight:650; letter-spacing:-.005em;
-    transition:opacity .15s, transform .06s;
-  }
-  .primary:hover:not(:disabled){opacity:.9}
-  .primary:active:not(:disabled){transform:translateY(1px)}
-  .primary:disabled{background:#1e1e23;color:var(--ink-4);cursor:default}
-
-  details{border-top:1px solid var(--line);padding-top:14px}
-  summary{
-    list-style:none; cursor:pointer; font-size:11px; letter-spacing:.08em;
-    text-transform:uppercase; color:var(--ink-3); display:flex; align-items:center; gap:7px;
-  }
-  summary::-webkit-details-marker{display:none}
-  summary::before{content:"";width:0;height:0;border:4px solid transparent;
-    border-left-color:var(--ink-4);transition:transform .15s}
-  details[open] summary::before{transform:rotate(90deg) translateX(-1px)}
-  summary:hover{color:var(--ink-2)}
-  .adv{display:flex;flex-direction:column;gap:14px;padding-top:14px}
-  .toggle{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2);cursor:pointer}
-  .toggle input{width:auto;margin:0;accent-color:#6f9d80}
-
-  /* ----------------------------------------------------------------- canvas */
-  .stage{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0}
-  .canvas{
-    flex:1; margin:16px 16px 0; border:1px solid var(--line);
-    border-radius:var(--r-md); background:
-      repeating-conic-gradient(#0e0e10 0% 25%, #101013 0% 50%) 0 0 / 22px 22px;
-    display:flex; align-items:center; justify-content:center;
-    overflow:hidden; position:relative; min-height:0;
-  }
-  .canvas img{max-width:100%;max-height:100%;object-fit:contain;display:block}
-  .placeholder{text-align:center;padding:0 48px;color:var(--ink-3);max-width:460px}
-  .placeholder h2{margin:0 0 8px;font-size:15px;font-weight:600;color:var(--ink-2)}
-  .placeholder p{margin:0;font-size:13px;line-height:1.6;color:var(--ink-4)}
-  .progress{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--sage);
-    transition:width .35s ease}
-  .alert{
-    position:absolute; left:16px; right:16px; bottom:16px;
-    background:#1d1416; border:1px solid #4a2b2e; color:#f5c2c1;
-    border-radius:var(--r-sm); padding:10px 12px; font-size:13px; line-height:1.5;
-  }
-
-  .filmstrip{flex:0 0 auto;display:flex;gap:7px;padding:12px 16px 0;overflow-x:auto}
-  .filmstrip::-webkit-scrollbar{height:6px}
-  .filmstrip::-webkit-scrollbar-thumb{background:#26262c;border-radius:3px}
-  .filmstrip img{
-    height:70px;width:50px;object-fit:cover;border-radius:6px;flex:0 0 auto;
-    border:1px solid var(--line-hi);cursor:pointer;opacity:.75;
-    transition:opacity .15s,border-color .15s;
-  }
-  .filmstrip img:hover{opacity:1;border-color:#454550}
-  .statusbar{
-    flex:0 0 auto; display:flex; justify-content:space-between; align-items:center;
-    padding:10px 18px 12px; font-size:12px; color:var(--ink-4);
-    font-variant-numeric:tabular-nums;
-  }
-  ::-webkit-scrollbar{width:9px}
+  .toggle{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2)}
+  .toggle input{width:auto;accent-color:#6f9d80}
+  ::-webkit-scrollbar{width:9px;height:8px}
   ::-webkit-scrollbar-thumb{background:#212127;border-radius:5px}
   ::-webkit-scrollbar-track{background:transparent}
 </style>
@@ -172,8 +141,7 @@
 <header>
   <div class="mark">
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2"
-            stroke="#f2f2f4" stroke-width="1.7"/>
+      <rect x="2.6" y="2.6" width="18.8" height="18.8" rx="5.2" stroke="#f2f2f4" stroke-width="1.7"/>
       <path d="M8.4 8.6 L11.4 12 L8.4 15.4" stroke="#8fd3a8" stroke-width="1.7"
             stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M13.4 15.4 H16.2" stroke="#f2f2f4" stroke-width="1.7" stroke-linecap="round"/>
@@ -183,99 +151,151 @@
   <div class="spacer"></div>
   <div class="state"><span class="led" id="led"></span><span id="stateText">Connecting</span></div>
   <button class="ghost" id="startBtn" hidden>Start backend</button>
-  <button class="ghost" id="folderBtn">Output folder</button>
+  <button class="ghost" id="newBtn">New</button>
+  <button class="ghost" id="setBtn" aria-pressed="false">Settings</button>
 </header>
 
 <main>
-  <aside>
-    <div class="rail-scroll">
-      <div class="field">
-        <div class="lab"><span>Prompt</span><kbd>Ctrl + Enter</kbd></div>
-        <textarea id="prompt" spellcheck="false"
-          placeholder="a golden retriever puppy asleep on a windowsill"></textarea>
-      </div>
-
-      <div class="duo">
-        <div class="field"><div class="lab">Size</div><select id="size"></select></div>
-        <div class="field"><div class="lab">Seed</div>
-          <input type="text" id="seed" placeholder="random" spellcheck="false"></div>
-      </div>
-
-      <div class="field"><div class="lab">Model</div><select id="model"></select></div>
-
-      <details id="adv">
-        <summary>Advanced</summary>
-        <div class="adv">
-          <div class="duo">
-            <div class="field"><div class="lab">Steps</div>
-              <input type="number" id="steps" min="1" max="150" value="30"></div>
-            <div class="field"><div class="lab">CFG</div>
-              <input type="number" id="cfg" min="1" max="20" step="0.5" value="4.5"></div>
-          </div>
-          <div class="field"><div class="lab">Sampler</div><select id="sampler"></select></div>
-          <label class="toggle">
-            <input type="checkbox" id="quality" checked>
-            Append realism terms
-          </label>
-          <div class="field"><div class="lab">Negative prompt</div>
-            <textarea id="negative" style="min-height:80px" spellcheck="false"></textarea></div>
-          <div class="field"><div class="lab">ComfyUI folder</div>
-            <div style="display:flex;gap:8px">
-              <input type="text" id="comfydir" spellcheck="false" placeholder="C:\ComfyUI">
-              <button class="ghost" id="browse">Browse</button>
-            </div>
-          </div>
+  <div class="chatcol">
+    <div class="thread" id="thread">
+      <div class="welcome" id="welcome">
+        <h2>Describe an image, or drop one in to edit</h2>
+        <p>Write plainly. Skip "8k" and "masterpiece"; they push the model toward
+           plastic-looking output. Realism terms are added for you.</p>
+        <div class="chips">
+          <button class="chip">a golden retriever puppy asleep on a windowsill</button>
+          <button class="chip">a red vintage bicycle against a stone wall</button>
+          <button class="chip">rain on a neon-lit street at night</button>
         </div>
-      </details>
-    </div>
-
-    <div class="rail-foot">
-      <button class="primary" id="go" disabled>Generate</button>
-    </div>
-  </aside>
-
-  <section class="stage">
-    <div class="canvas" id="canvas">
-      <div class="placeholder">
-        <h2>Nothing generated yet</h2>
-        <p>Describe an image in plain words. Skip quality boosters like
-           "8k" or "masterpiece"; they push the model toward plastic-looking
-           output. The realism terms are added for you.</p>
       </div>
-      <div class="progress" id="progress"></div>
+      <div class="inner" id="inner"></div>
     </div>
-    <div class="filmstrip" id="filmstrip"></div>
-    <div class="statusbar"><span id="meta"></span><span id="clock"></span></div>
-  </section>
+
+    <div class="composer">
+      <div class="cwrap">
+        <div class="context" id="context" hidden>
+          <img id="ctxThumb" alt="">
+          <span id="ctxLabel">Editing this image</span>
+          <span class="strength">
+            <label for="denoise">change</label>
+            <input type="range" id="denoise" min="0.2" max="0.9" step="0.05" value="0.55">
+            <span id="denoiseVal">0.55</span>
+          </span>
+          <button class="x" id="ctxClear">clear</button>
+        </div>
+        <div class="box">
+          <textarea id="input" rows="1" spellcheck="false"
+            placeholder="Describe an image, or what to change..."></textarea>
+          <button class="ghost" id="attachBtn" title="Attach a reference image">Attach</button>
+          <button class="send" id="send" disabled>Send</button>
+        </div>
+        <div class="hint">Enter to send &nbsp;·&nbsp; Shift + Enter for a new line</div>
+      </div>
+    </div>
+  </div>
+
+  <aside id="panel" hidden>
+    <div class="field"><div class="lab">Model</div><select id="model"></select></div>
+    <div class="field"><div class="lab">Size (new images)</div><select id="size"></select></div>
+    <div class="duo">
+      <div class="field"><div class="lab">Steps</div>
+        <input type="number" id="steps" min="1" max="150" value="30"></div>
+      <div class="field"><div class="lab">CFG</div>
+        <input type="number" id="cfg" min="1" max="20" step="0.5" value="4.5"></div>
+    </div>
+    <div class="field"><div class="lab">Sampler</div><select id="sampler"></select></div>
+    <div class="field"><div class="lab">Seed</div>
+      <input type="text" id="seed" placeholder="random" spellcheck="false"></div>
+    <label class="toggle"><input type="checkbox" id="quality" checked> Append realism terms</label>
+    <div class="field"><div class="lab">Negative prompt</div>
+      <textarea id="negative" rows="4"></textarea></div>
+    <div class="field"><div class="lab">ComfyUI folder</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="comfydir" spellcheck="false">
+        <button class="ghost" id="browse">…</button>
+      </div>
+    </div>
+    <button class="ghost" id="folderBtn">Open output folder</button>
+  </aside>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
 const api = () => window.pywebview.api;
-const shots = [];
-let busy = false, ready = false;
 
-const setState = (text, kind) => {
-  $('stateText').textContent = text;
-  $('led').className = 'led' + (kind ? ' ' + kind : '');
-};
+let ready = false, busy = false;
+let attached = null;      // data URL the user attached this turn
+let working = null;       // last generated image, carried forward for edits
 
-const fill = (el, values, chosen) => {
-  el.innerHTML = values.map(v =>
-    `<option value="${v}"${v === chosen ? ' selected' : ''}>${v}</option>`).join('');
-};
+const setState = (t, k) => { $('stateText').textContent = t; $('led').className = 'led' + (k ? ' ' + k : ''); };
+const fill = (el, vals, chosen) => el.innerHTML = vals.map(v =>
+  `<option value="${v}"${v === chosen ? ' selected' : ''}>${v}</option>`).join('');
+const scroll = () => { const t = $('thread'); t.scrollTop = t.scrollHeight; };
 
-function clearAlert() {
-  const a = $('canvas').querySelector('.alert');
-  if (a) a.remove();
+function el(tag, cls, html) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html !== undefined) n.innerHTML = html;
+  return n;
 }
 
-function alertBox(message) {
-  clearAlert();
-  const el = document.createElement('div');
-  el.className = 'alert';
-  el.textContent = message;
-  $('canvas').appendChild(el);
+function addUser(text, img) {
+  $('welcome').hidden = true;
+  const turn = el('div', 'turn user');
+  if (img) {
+    const a = el('div', 'attached');
+    a.innerHTML = `<img src="${img}" alt=""><span>reference</span>`;
+    turn.appendChild(a);
+  }
+  turn.appendChild(el('div', 'bubble', text.replace(/</g, '&lt;')));
+  $('inner').appendChild(turn);
+  scroll();
+}
+
+function addThinking() {
+  const t = el('div', 'turn');
+  t.innerHTML = `<div class="thinking"><span class="dots"><i></i><i></i><i></i></span>
+                 <span id="elapsed">0s</span></div>`;
+  $('inner').appendChild(t); scroll();
+  return t;
+}
+
+function addResult(node, res) {
+  node.className = 'turn';
+  node.innerHTML = '';
+  const box = el('div', 'result');
+  box.innerHTML =
+    `<img src="${res.image}" alt="Generated image">
+     <div class="caption">
+       <span>seed ${res.seed}</span><span>${res.width} x ${res.height}</span>
+       <button data-act="edit">edit this</button>
+       <button data-act="save">save as…</button>
+     </div>`;
+  box.querySelector('[data-act=edit]').onclick = () => useAsContext(res.image);
+  box.querySelector('[data-act=save]').onclick = () => api().save_image(res.image);
+  node.appendChild(box);
+  working = res.image;
+  useAsContext(res.image);
+  scroll();
+}
+
+function addFail(node, msg) {
+  node.className = 'turn';
+  node.innerHTML = '';
+  node.appendChild(el('div', 'fail', msg.replace(/</g, '&lt;')));
+  scroll();
+}
+
+function useAsContext(img) {
+  attached = img;
+  $('ctxThumb').src = img;
+  $('context').hidden = false;
+  $('ctxLabel').textContent = 'Editing this image';
+}
+
+function clearContext() {
+  attached = null;
+  $('context').hidden = true;
 }
 
 async function refresh() {
@@ -292,86 +312,98 @@ async function refresh() {
   $('quality').checked = s.settings.add_quality;
   $('negative').value = s.settings.negative;
   $('comfydir').value = s.comfy_dir || '';
-  $('go').disabled = !s.up;
-  if (!s.up && !s.comfy_dir) $('adv').open = true;
+  updateSend();
+  if (!s.up && !s.comfy_dir) { $('panel').hidden = false; $('setBtn').setAttribute('aria-pressed', 'true'); }
 }
 
-async function startBackend() {
-  clearAlert();
-  setState('Starting ComfyUI', 'work');
-  $('startBtn').disabled = true;
-  const r = await api().start_backend($('comfydir').value.trim());
-  $('startBtn').disabled = false;
-  if (r.error) { setState('Backend offline', 'bad'); alertBox(r.error); return; }
-  await refresh();
+function updateSend() {
+  $('send').disabled = !ready || busy || !$('input').value.trim();
 }
 
-async function generate() {
-  if (busy || !ready) return;
-  const prompt = $('prompt').value.trim();
-  if (!prompt) { $('prompt').focus(); return; }
+async function send() {
+  const text = $('input').value.trim();
+  if (!text || busy || !ready) return;
 
-  busy = true;
-  clearAlert();
-  $('go').disabled = true;
-  $('go').textContent = 'Generating';
+  const src = attached;
+  addUser(text, src);
+  $('input').value = '';
+  $('input').style.height = 'auto';
+  busy = true; updateSend();
   setState('Generating', 'work');
 
+  const node = addThinking();
   const t0 = Date.now();
-  $('progress').style.width = '10%';
   const tick = setInterval(() => {
-    const s = (Date.now() - t0) / 1000;
-    $('clock').textContent = s.toFixed(0) + 's';
-    $('progress').style.width = Math.min(94, 10 + s * 2.4) + '%';
-  }, 200);
+    const e = node.querySelector('#elapsed');
+    if (e) e.textContent = ((Date.now() - t0) / 1000).toFixed(0) + 's';
+  }, 250);
 
   const res = await api().generate({
-    prompt, size: $('size').value, seed: $('seed').value.trim(),
+    prompt: text, size: $('size').value, seed: $('seed').value.trim(),
     model: $('model').value, steps: $('steps').value, cfg: $('cfg').value,
     sampler: $('sampler').value, negative: $('negative').value,
     add_quality: $('quality').checked,
+    source_image: src || '', denoise: $('denoise').value,
   });
 
   clearInterval(tick);
-  if (res.error) {
-    setState('Ready', 'ok');
-    alertBox(res.error);
-  } else {
-    setState('Ready', 'ok');
-    render(res.image);
-    $('meta').textContent = `seed ${res.seed} · ${res.width} x ${res.height}`;
-    shots.unshift(res.image);
-    $('filmstrip').innerHTML = shots.slice(0, 30)
-      .map((src, i) => `<img src="${src}" data-i="${i}" alt="">`).join('');
-  }
-  $('progress').style.width = '100%';
-  setTimeout(() => ($('progress').style.width = '0'), 480);
-  busy = false;
-  $('go').disabled = false;
-  $('go').textContent = 'Generate';
+  if (res.error) { addFail(node, res.error); setState('Ready', 'ok'); }
+  else { addResult(node, res); setState('Ready', 'ok'); }
+  busy = false; updateSend();
 }
 
-function render(src) {
-  $('canvas').innerHTML =
-    `<img src="${src}" alt="Generated image">` +
-    `<div class="progress" id="progress" style="width:0"></div>`;
-}
-
-$('filmstrip').addEventListener('click', e => {
-  if (e.target.tagName === 'IMG') render(shots[+e.target.dataset.i]);
+$('send').onclick = send;
+$('input').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(150, e.target.scrollHeight) + 'px';
+  updateSend();
 });
-$('go').onclick = generate;
-$('startBtn').onclick = startBackend;
+$('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+$('attachBtn').onclick = async () => {
+  const r = await api().pick_image();
+  if (r.image) { useAsContext(r.image); $('ctxLabel').textContent = r.name || 'Reference image'; }
+};
+$('ctxClear').onclick = clearContext;
+$('denoise').oninput = e => $('denoiseVal').textContent = e.target.value;
+$('newBtn').onclick = () => {
+  $('inner').innerHTML = ''; $('welcome').hidden = false;
+  clearContext(); working = null;
+};
+$('setBtn').onclick = () => {
+  const open = $('panel').hidden;
+  $('panel').hidden = !open;
+  $('setBtn').setAttribute('aria-pressed', String(open));
+};
 $('folderBtn').onclick = () => api().open_output();
 $('browse').onclick = async () => {
   const r = await api().pick_folder();
   if (r.path) { $('comfydir').value = r.path; api().save_setting('comfy_dir', r.path); }
 };
-$('comfydir').addEventListener('change', e =>
-  api().save_setting('comfy_dir', e.target.value.trim()));
-$('prompt').addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+$('startBtn').onclick = async () => {
+  setState('Starting ComfyUI', 'work');
+  const r = await api().start_backend($('comfydir').value.trim());
+  if (r.error) { setState(r.error, 'bad'); return; }
+  await refresh();
+};
+document.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+  $('input').value = c.textContent.trim();
+  $('input').dispatchEvent(new Event('input'));
+  $('input').focus();
 });
+
+// drag and drop a file anywhere in the window
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (!f || !f.type.startsWith('image/')) return;
+  const r = new FileReader();
+  r.onload = () => { useAsContext(r.result); $('ctxLabel').textContent = f.name; };
+  r.readAsDataURL(f);
+});
+
 window.addEventListener('pywebviewready', refresh);
 </script>
 </body>

@@ -113,6 +113,8 @@ class Api:
                 cfg=float(opts.get("cfg", 4.5)),
                 sampler=opts.get("sampler", "dpmpp_2m"),
                 add_quality=bool(opts.get("add_quality", True)),
+                source_image=opts.get("source_image") or None,
+                denoise=float(opts.get("denoise", 0.55)),
             )
             self.settings.update({
                 "model": model, "steps": int(opts.get("steps", 30)),
@@ -137,6 +139,43 @@ class Api:
         win = webview.windows[0]
         res = win.create_file_dialog(webview.FOLDER_DIALOG)
         return {"path": res[0] if res else ""}
+
+    def pick_image(self):
+        """Native file picker, returned as a data URL the page can render."""
+        import base64
+        win = webview.windows[0]
+        res = win.create_file_dialog(
+            webview.OPEN_DIALOG, allow_multiple=False,
+            file_types=("Images (*.png;*.jpg;*.jpeg;*.webp;*.bmp)",))
+        if not res:
+            return {"image": ""}
+        p = Path(res[0])
+        try:
+            raw = p.read_bytes()
+        except OSError as e:
+            return {"error": str(e)}
+        if len(raw) > 40 * 1024 * 1024:
+            return {"error": "Image is over 40 MB."}
+        mime = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
+        return {"image": f"data:{mime};base64," + base64.b64encode(raw).decode(),
+                "name": p.name}
+
+    def save_image(self, data_url: str):
+        """Save a result somewhere the user chooses."""
+        import base64
+        win = webview.windows[0]
+        dest = win.create_file_dialog(webview.SAVE_DIALOG,
+                                      save_filename="promptbox.png")
+        if not dest:
+            return {"ok": False}
+        path = Path(dest if isinstance(dest, str) else dest[0])
+        if path.suffix.lower() != ".png":
+            path = path.with_suffix(".png")
+        try:
+            path.write_bytes(base64.b64decode(data_url.split(",", 1)[-1]))
+        except Exception as e:
+            return {"error": str(e)}
+        return {"ok": True, "path": str(path)}
 
     def save_setting(self, key: str, value):
         self.settings[key] = value

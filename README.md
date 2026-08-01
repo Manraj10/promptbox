@@ -1,6 +1,7 @@
 # Promptbox
 
-A plain desktop app for local image generation. Type a prompt, get a picture.
+A plain desktop app for local image generation and editing. Type a prompt, get a
+picture. Then say what to change.
 
 ![Promptbox](assets/screenshot.png)
 
@@ -8,6 +9,7 @@ Promptbox is a small native window over a [ComfyUI](https://github.com/comfyanon
 install. ComfyUI is powerful and its node graph is a wall - if you just want an image
 from a sentence, this is that.
 
+- **Conversational** - each result carries forward, so you can keep refining
 - **Native window**, not a browser tab
 - **Fully local** - no accounts, no API keys, nothing leaves your machine
 - **Starts the backend for you** - point it at your ComfyUI folder once
@@ -31,6 +33,28 @@ airbrushed, plastic skin, poreless, cgi, 3d render, doll, waxy, uncanny …
 
 So write plainly - *"a golden retriever puppy asleep on a windowsill"* - and let the
 defaults do the work. Both are editable under **Advanced** if you disagree.
+
+---
+
+## Editing
+
+Attach an image, or drag one onto the window, or press **edit this** under any result.
+Then describe the change and send.
+
+Editing is img2img: the source is encoded, partially re-noised, and re-sampled. The
+**change** slider is the whole story.
+
+| Change | What it does |
+|---|---|
+| 0.25-0.40 | recolour, lighting, small texture shifts |
+| 0.45-0.60 | clothing, background, style; the subject mostly survives |
+| 0.70+ | effectively a new image, loosely guided by the old one |
+
+Worth being straight about the limitation: this is *not* instruction editing. It will
+not isolate "make only the shirt red" and leave everything else untouched, and at
+higher strengths faces drift. Models that do true instruction editing (FLUX.2 klein,
+FLUX.1 Kontext, Qwen-Image-Edit) work through the same ComfyUI backend, and wiring one
+in is on the roadmap below.
 
 ---
 
@@ -86,11 +110,11 @@ find yours, set the folder under **Advanced → ComfyUI folder**, then press
 
 | | |
 |---|---|
-| Generate | `Ctrl`/`Cmd` + `Enter`, or the button |
-| Size | portrait, square, landscape, tall |
-| Seed | blank for random; reuse a number to reproduce an image exactly |
-| Advanced | steps, CFG, sampler, negative prompt, model |
-| Output | button in the header opens the folder |
+| Send | `Enter`. `Shift + Enter` for a new line |
+| Edit | attach, drag a file in, or press **edit this** under a result |
+| New | clears the thread and starts a fresh image |
+| Settings | model, size, steps, CFG, sampler, seed, negative prompt |
+| Save | **save as…** under any result |
 
 Images are written to `ComfyUI/output/promptbox/`.
 
@@ -102,9 +126,10 @@ Images are written to `ComfyUI/output/promptbox/`.
 └─────────────┘                         └──────────────┘           └─────────┘
 ```
 
-`comfy.py` builds a fixed seven-node graph and posts it to ComfyUI's `/prompt`
-endpoint, polls `/history/{id}`, and returns the image as a data URI. No node editing,
-no workflow JSON to manage.
+`comfy.py` builds a fixed graph and posts it to ComfyUI's `/prompt` endpoint, polls
+`/history/{id}`, and returns the image as a data URI. Two graphs: text-to-image from an
+empty latent, and img2img which uploads the source through `/upload/image` and encodes
+it with `VAEEncode`. No node editing, no workflow JSON to manage.
 
 If Promptbox started ComfyUI, it shuts it down on exit. If ComfyUI was already
 running, it's left alone.
@@ -112,9 +137,9 @@ running, it's left alone.
 ## Roadmap
 
 - [ ] Batch generation (n images per prompt)
-- [ ] Image-to-image and inpainting
+- [ ] Inpainting with a brush mask
+- [ ] Instruction editing via FLUX.2 klein / Kontext
 - [ ] Character consistency via IPAdapter reference image
-- [ ] Packaged `.exe` / `.app` so Python isn't a prerequisite
 - [ ] Prompt history that survives restarts
 
 Issues and PRs welcome.
