@@ -114,7 +114,7 @@ class Api:
                 sampler=opts.get("sampler", "dpmpp_2m"),
                 add_quality=bool(opts.get("add_quality", True)),
                 source_image=opts.get("source_image") or None,
-                denoise=float(opts.get("denoise", 0.55)),
+                denoise=float(opts.get("denoise", 0.70)),
             )
             self.settings.update({
                 "model": model, "steps": int(opts.get("steps", 30)),

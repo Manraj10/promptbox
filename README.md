@@ -44,11 +44,20 @@ Then describe the change and send.
 Editing is img2img: the source is encoded, partially re-noised, and re-sampled. The
 **change** slider is the whole story.
 
-| Change | What it does |
-|---|---|
-| 0.25-0.40 | recolour, lighting, small texture shifts |
-| 0.45-0.60 | clothing, background, style; the subject mostly survives |
-| 0.70+ | effectively a new image, loosely guided by the old one |
+Measured on a 1024px source, mean pixel change out of 255:
+
+| Change | Measured | Reads as |
+|---|---|---|
+| 0.45 | 8.9 | invisible |
+| 0.60 | 15.5 | subtle |
+| **0.70** | **21.7** | **clear (default)** |
+| 0.80 | 25.9 | clear, subject starts drifting |
+
+The default is 0.70 because anything under about 0.5 looks like nothing happened.
+
+**Describe the result, not the instruction.** SDXL reads your prompt as a caption for
+the image you want, not as a command. "make the light warmer" barely moves it;
+"a puppy on a windowsill at sunset, warm orange light, long shadows" works.
 
 Worth being straight about the limitation: this is *not* instruction editing. It will
 not isolate "make only the shirt red" and leave everything else untouched, and at

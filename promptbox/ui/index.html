@@ -177,15 +177,15 @@
           <img id="ctxThumb" alt="">
           <span id="ctxLabel">Editing this image</span>
           <span class="strength">
-            <label for="denoise">change</label>
-            <input type="range" id="denoise" min="0.2" max="0.9" step="0.05" value="0.55">
-            <span id="denoiseVal">0.55</span>
+            <label for="denoise" title="How far from the original. Below 0.5 the change is barely visible.">change</label>
+            <input type="range" id="denoise" min="0.3" max="0.9" step="0.05" value="0.7">
+            <span id="denoiseVal">0.70</span>
           </span>
           <button class="x" id="ctxClear">clear</button>
         </div>
         <div class="box">
           <textarea id="input" rows="1" spellcheck="false"
-            placeholder="Describe an image, or what to change..."></textarea>
+            placeholder="Describe an image. When editing, describe the result you want, not the instruction."></textarea>
           <button class="ghost" id="attachBtn" title="Attach a reference image">Attach</button>
           <button class="send" id="send" disabled>Send</button>
         </div>
@@ -366,7 +366,7 @@ $('attachBtn').onclick = async () => {
   if (r.image) { useAsContext(r.image); $('ctxLabel').textContent = r.name || 'Reference image'; }
 };
 $('ctxClear').onclick = clearContext;
-$('denoise').oninput = e => $('denoiseVal').textContent = e.target.value;
+$('denoise').oninput = e => $('denoiseVal').textContent = Number(e.target.value).toFixed(2);
 $('newBtn').onclick = () => {
   $('inner').innerHTML = ''; $('welcome').hidden = false;
   clearContext(); working = null;
